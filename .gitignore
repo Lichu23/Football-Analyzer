@@ -62,6 +62,10 @@ frontend/build/
 .vscode/
 .idea/
 
+# ── Markdown files (internal docs — keep only README public) ──────────────────
+*.md
+!README.md
+
 # ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
