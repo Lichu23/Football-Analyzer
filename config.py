@@ -19,7 +19,7 @@ MIN_TRACK_FRAMES = 60    # discard any player seen in fewer than this many frame
 PRE_MERGE_MIN_FRAMES = 5 # minimal noise filter applied before merge — keeps short fragments for re-ID
 
 # Set to 2 or 3 to skip frames and speed up processing on long videos
-FRAME_SKIP = 1
+FRAME_SKIP = 3
 
 # Standard football pitch dimensions in meters
 PITCH_LENGTH = 105

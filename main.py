@@ -13,7 +13,7 @@ from utils import video_info
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Football Analyzer — Phase 2: Movement Metrics")
+    parser = argparse.ArgumentParser(description="Football Analyzer")
     parser.add_argument("--video", required=True, help="Path to input video file")
     parser.add_argument(
         "--team", type=int, choices=[0, 1], default=None,

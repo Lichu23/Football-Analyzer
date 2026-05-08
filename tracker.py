@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import supervision as sv
 from ultralytics import YOLO
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
