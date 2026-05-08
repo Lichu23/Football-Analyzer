@@ -6,26 +6,17 @@ VIDEO_DIR = ROOT / "videos"
 OUTPUT_DIR = ROOT / "output"
 
 # Model — swap to yolov8x.pt for higher accuracy (slower)
-MODEL_WEIGHTS = "yolov8s.pt"
-DEVICE = "cpu"
+MODEL_WEIGHTS = "yolov8m.pt"
+DEVICE = "cuda"
+BATCH_SIZE = 8   # frames per YOLO inference call — fills GPU pipeline, eliminates saw-tooth
 CONFIDENCE = 0.5
 IOU = 0.5
 
 # ByteTrack settings
 TRACK_BUFFER = 180       # frames to keep a lost track alive (~6s at 30fps)
 TRACK_THRESHOLD = 0.5    # min confidence to start a new track
-MIN_TRACK_FRAMES = 60    # discard any player seen in fewer than this many frames
-
-# Field boundary polygon — normalized (x, y) coords where y=0 is top of frame.
-# Detections whose foot point falls outside this polygon are ignored before tracking,
-# so substitutes and people on the bench never get a tracking ID.
-# Adjust the far-side y values to match the far touchline position in your video.
-FIELD_POLYGON = [
-    (0.00, 0.47),   # far-left corner
-    (1.00, 0.43),   # far-right corner  (slight tilt from camera perspective)
-    (1.00, 1.00),   # near-right corner
-    (0.00, 1.00),   # near-left corner
-]
+MIN_TRACK_FRAMES = 60    # discard any player seen in fewer than this many frames (applied after merge)
+PRE_MERGE_MIN_FRAMES = 5 # minimal noise filter applied before merge — keeps short fragments for re-ID
 
 # Set to 2 or 3 to skip frames and speed up processing on long videos
 FRAME_SKIP = 3
@@ -38,27 +29,38 @@ PITCH_WIDTH = 68
 HEATMAP_SIGMA = 15   # gaussian blur radius — higher = smoother
 HEATMAP_ALPHA = 0.65 # overlay opacity
 
-# Phase 3 — Team analytics
-JERSEY_TOP_FRAC  = 0.15   # skip top 15% of bbox (head)
-JERSEY_BOT_FRAC  = 0.50   # crop jersey down to 50% of bbox height
-JERSEY_SIDE_FRAC = 0.15   # horizontal inset to avoid background bleed
-MIN_COLOR_SAMPLES = 5     # min jersey samples for a player to enter clustering
+# Field boundary polygon — normalized (x, y), y=0 is top of frame
+# Drops bench/substitute detections before ByteTrack sees them
+FIELD_POLYGON = [
+    (0.00, 0.47),
+    (1.00, 0.43),
+    (1.00, 1.00),
+    (0.00, 1.00),
+]
 
-# Jersey number OCR
-OCR_EVERY_N_FRAMES = 60   # run OCR once every ~2s (at 30fps) — balance speed vs coverage
-JERSEY_NUM_TOP_FRAC  = 0.20  # start of number crop (just below head)
-JERSEY_NUM_BOT_FRAC  = 0.65  # end of number crop
-JERSEY_NUM_SIDE_FRAC = 0.20  # horizontal inset
-OCR_MIN_VOTES = 3            # need at least this many consistent readings to trust a number
-OCR_MIN_CONFIDENCE = 0.30    # fraction of OCR attempts that must agree
+# Jersey color extraction
+JERSEY_TOP_FRAC  = 0.15
+JERSEY_BOT_FRAC  = 0.50
+JERSEY_SIDE_FRAC = 0.15
+MIN_COLOR_SAMPLES = 5
+SAMPLE_CROPS_PER_PLAYER = 5   # sample crops saved per player for team preview
+
+# Team visuals
+TEAM_COLORS = ["#3b82f6", "#ef4444"]   # team 0 = blue, team 1 = red
+
+# Outlier/referee exclusion — LAB color distance from nearest team centroid.
+# A player whose jersey color is further than this from both teams is excluded.
+# LAB space: white vs dark = ~60 units apart. Referee teal ≈ 30-40 from nearest team.
+# Lower = more strict (excludes more). Higher = more permissive (keeps more).
+OUTLIER_COLOR_THRESHOLD_LAB = 20.0
 
 # Spatial-temporal re-ID merge
-# Two tracks of the same team that ended/started close together in time and space
-# are merged into one player.
-MERGE_MAX_GAP_FRAMES = 180   # max processed-frame gap (~6s at 30fps with skip=3)
-MERGE_MAX_DIST       = 0.12  # max normalized distance between last/first positions
+MERGE_MAX_GAP_FRAMES       = 3600  # max video-frame gap (~2 min at 30fps) — camera can lose player for long
+MERGE_MAX_DIST             = 0.30  # max normalized distance for mid-field tracks
+MERGE_EDGE_MARGIN          = 0.12  # tracks ending/starting within this margin get a looser distance check
+MERGE_COLOR_THRESHOLD_LAB  = 25.0  # max LAB jersey color distance between two tracks to allow a merge
 
-POSSESSION_GRID_COLS = 6
-POSSESSION_GRID_ROWS = 4
-
-TEAM_COLORS = ["#3b82f6", "#ef4444"]  # team 0 = blue, team 1 = red
+# Phase 2 — Movement metrics
+SPRINT_THRESHOLD_KMH = 20.0   # speed above this counts as a sprint
+MAX_SPEED_FILTER_KMH = 40.0   # discard speeds above this (tracking jitter)
+SPEED_SMOOTH_WINDOW  = 5      # rolling average window for speed smoothing

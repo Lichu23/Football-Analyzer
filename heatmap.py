@@ -7,8 +7,13 @@ from pitch import draw_pitch
 from config import OUTPUT_DIR, PITCH_LENGTH, PITCH_WIDTH, HEATMAP_SIGMA, HEATMAP_ALPHA, TEAM_COLORS
 
 
-def generate_heatmap(player_id: int, positions: list[tuple[float, float]]) -> Path:
-    OUTPUT_DIR.mkdir(exist_ok=True)
+def generate_heatmap(
+    player_id: int,
+    positions: list[tuple[float, float]],
+    output_dir: Path | None = None,
+) -> Path:
+    save_dir = output_dir or OUTPUT_DIR
+    save_dir.mkdir(parents=True, exist_ok=True)
 
     fig, ax = plt.subplots(figsize=(14, 9))
     draw_pitch(ax, length=PITCH_LENGTH, width=PITCH_WIDTH)
@@ -47,7 +52,7 @@ def generate_heatmap(player_id: int, positions: list[tuple[float, float]]) -> Pa
     )
     fig.patch.set_facecolor("#1a1a2e")
 
-    output_path = OUTPUT_DIR / f"player_{player_id}_heatmap.png"
+    output_path = save_dir / f"player_{player_id}_heatmap.png"
     fig.savefig(output_path, dpi=120, bbox_inches="tight", facecolor="#1a1a2e")
     plt.close(fig)
     print(f"  Saved {output_path.name}")
